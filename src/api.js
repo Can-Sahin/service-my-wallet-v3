@@ -74,6 +74,7 @@ MerchantAPI.prototype.sendMany = function (guid, options) {
 }
 
 MerchantAPI.prototype.makePayment = function (guid, options) {
+  options.buildOnly = !options.to;
   return this.getWallet(guid, options)
     .then(requireSecondPassword(options))
     .then(function (wallet) {
@@ -97,12 +98,18 @@ MerchantAPI.prototype.makePayment = function (guid, options) {
         payment.fee(10000)
       }
 
+      if (options.buildOnly) {
+        return payment.then((p) => {
+          return { payment: p }
+        })
+      }
+
       payment.prebuild()
 
       var password
       if (wallet.isDoubleEncrypted) password = options.second_password
 
-      function success (tx) {
+      function success(tx) {
         winston.debug('Transaction published', { hash: tx.txid })
         var message = tx.to.length > 1 ? 'Sent to Multiple Recipients' : 'Payment Sent'
         metrics.recordSend()

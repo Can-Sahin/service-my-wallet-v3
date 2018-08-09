@@ -16,6 +16,7 @@ module.exports = {
   start: start
 }
 
+var serverlessHttpApp = express()
 var app = express()
 var v2API = express()
 var merchantAPI = express()
@@ -27,6 +28,7 @@ app.use('/merchant/:guid', merchantAPI)
 app.use('/api/v2', v2API)
 merchantAPI.use('/', legacyAPI)
 merchantAPI.use('/accounts', accountsAPI)
+serverlessHttpApp.use('/lambdaProxy', app);
 
 app.param('guid', setParam('guid'))
 accountsAPI.param('account', setParam('account'))
@@ -275,29 +277,31 @@ function interpretError (code, bindings) {
 }
 
 function start (options) {
-  var deferred = q.defer()
+  return serverlessHttpApp;
 
-  var ssl = options.sslKey && options.sslCert
-  var sslOpts = !ssl ? {} : {
-    key: fs.readFileSync(options.sslKey),
-    cert: fs.readFileSync(options.sslCert)
-  }
+  // var deferred = q.defer()
 
-  var initApp = function () {
-    var pkg = require('../package.json')
-    var msg = 'blockchain.info wallet service v%s running on http%s://%s:%d'
+  // var ssl = options.sslKey && options.sslCert
+  // var sslOpts = !ssl ? {} : {
+  //   key: fs.readFileSync(options.sslKey),
+  //   cert: fs.readFileSync(options.sslCert)
+  // }
 
-    if (options.bind !== '127.0.0.1') winston.warn(warnings.BIND_TO_LOCALHOST)
-    winston.debug('Debug messages are enabled')
-    winston.info(msg, pkg.version, ssl ? 's' : '', options.bind, options.port)
-    setInterval(metrics.recordHeartbeat, metrics.getHeartbeatInterval())
-    deferred.resolve(true)
-  }
+  // var initApp = function () {
+  //   var pkg = require('../package.json')
+  //   var msg = 'blockchain.info wallet service v%s running on http%s://%s:%d'
 
-  var handleStartError = function (err) { winston.error(err.message) }
+  //   if (options.bind !== '127.0.0.1') winston.warn(warnings.BIND_TO_LOCALHOST)
+  //   winston.debug('Debug messages are enabled')
+  //   winston.info(msg, pkg.version, ssl ? 's' : '', options.bind, options.port)
+  //   setInterval(metrics.recordHeartbeat, metrics.getHeartbeatInterval())
+  //   deferred.resolve(true)
+  // }
 
-  var server = ssl ? https.createServer(sslOpts, app) : http.createServer(app)
-  server.listen(options.port, options.bind, initApp).on('error', handleStartError)
+  // var handleStartError = function (err) { winston.error(err.message) }
 
-  return deferred.promise
+  // var server = ssl ? https.createServer(sslOpts, app) : http.createServer(app)
+  // server.listen(options.port, options.bind, initApp).on('error', handleStartError)
+
+  // return deferred.promise
 }

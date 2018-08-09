@@ -1,6 +1,25 @@
 
 # Blockchain Wallet API V2
 
+-------------
+For AWS Lambda Proxy Integration: 
+
+Configure your serverless template such like
+```
+service-my-wallet-v3:
+  handler: src/index.handler
+  description: service-my-wallet-v3
+  environment: 
+      LOGLEVEL: debug
+  events:
+    - http:
+        method: any
+        path: /lambdaProxy/{proxy+}
+```
+The API runs at prefix `lambdaProxy` (up to you to change)
+
+-------------
+
 Programmatically interface with your Blockchain.info wallet.
 
 ## Contents
